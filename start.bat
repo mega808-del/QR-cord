@@ -1,33 +1,31 @@
 @echo off
-title Contact QR Code Generator
+title Contact QR Generator - Web App
 cd /d "%~dp0"
 
+rem ============================================================
+rem  This app is now a SERVERLESS static web app.
+rem  No Python / Flask server is needed anymore.
+rem  It is hosted free 24/7 on GitHub Pages (see DEPLOY.md).
+rem
+rem  >>> Your app is published on GitHub Pages at this URL:
+rem  >>> https://mega808-del.github.io/QR-cord/
+rem ============================================================
+
+set "APPURL=https://mega808-del.github.io/QR-cord/"
+
 echo.
 echo  ==========================================
-echo   Contact QR Code Generator
-echo   Browser will open automatically...
+echo   Contact QR Code Generator (Web App)
+echo   Opening: %APPURL%
 echo  ==========================================
 echo.
 
-where python >nul 2>nul
-if %errorlevel%==0 (
-    python app.py
-    goto end
-)
+start "" "%APPURL%"
 
-where py >nul 2>nul
-if %errorlevel%==0 (
-    py app.py
-    goto end
-)
-
-echo  [ERROR] Python not found!
-echo  Please install Python from https://www.python.org/downloads/
-echo  and check "Add python.exe to PATH" during install.
-pause
-exit /b 1
-
-:end
+echo  A browser window should open now.
+echo  You can close this window and turn off this PC -
+echo  the app keeps running on GitHub Pages.
 echo.
-echo  Server stopped. You can close this window.
+echo  (To use your own URL, edit APPURL inside start.bat)
+echo.
 pause

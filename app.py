@@ -24,8 +24,6 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 app = Flask(__name__)
 
-os.makedirs("saved_qrcodes", exist_ok=True)  # QR 백업 저장 폴더 보장
-
 # 공유 링크용 QR 저장소 (메모리 기반, 서버 재시작 시 초기화)
 QR_STORE: dict[str, dict] = {}
 MAX_STORE = 100  # 최대 보관 개수(초과 시 가장 오래된 것부터 삭제)
@@ -1020,14 +1018,7 @@ def api_qr():
 
     qid = register_qr(name, phone_norm, png)
 
-    # 로컬 백업 저장 (선택적 기록)
-    try:
-        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        with open(f"saved_qrcodes/vcard_{stamp}_{sanitize_filename(name)}.png", "wb") as f:
-            f.write(png)
-    except OSError:
-        pass
-
+    # 디스크 저장 없이 메모리에서 곧바로 응답 (폴더에 QR이 쌓이지 않음)
     resp = send_file(io.BytesIO(png), mimetype="image/png",
                      download_name=f"vcard_{sanitize_filename(name)}.png")
     resp.headers["X-Qr-Id"] = qid

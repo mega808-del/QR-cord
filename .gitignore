@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+saved_qrcodes/
+last_qr.json
+.DS_Store
+Thumbs.db
