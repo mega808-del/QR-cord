@@ -25,11 +25,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Pages가 꺼져 있어도 자동으로 활성화합니다 (Source: GitHub Actions)
+      # 사전 요건: Settings → Pages → Source를 "GitHub Actions"로 1회 설정
       - name: Configure Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload docs/ as Pages artifact
         uses: actions/upload-pages-artifact@v3
