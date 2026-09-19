@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3b6cf6">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
 <title>연락처 QR코드 생성기</title>
 <style>
   :root {
@@ -222,6 +226,13 @@ shareBtn.addEventListener('click', async function () {
     setStatus('공유 링크: ' + link, '');
   }
 });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
 </script>
 </body>
 </html>

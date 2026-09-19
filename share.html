@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3b6cf6">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
 <title>연락처 QR코드</title>
 <style>
   :root {
@@ -56,6 +60,41 @@
   .errbox { text-align: center; padding: 60px 20px; font-family: sans-serif; }
   .errbox h2 { margin: 0 0 10px; }
   .errbox p { color: #888; }
+  /* QR 우상단 설치 버튼 (신규 추가 — 기존 요소는 변경 없음)
+     주의: 버튼이 QR 모듈(특히 우상단 파인더 패턴)을 덮으면 스캔이 깨지므로
+     QR 이미지와 겹치지 않게 위쪽 띠에 배치함 */
+  .qrbox { position: relative; display: inline-block; padding-top: 36px; }
+  .qrbox .qr { margin-bottom: 0; }
+  #installBtn {
+    position: absolute; top: 0; right: 0; z-index: 5;
+    width: auto; margin: 0; padding: 7px 13px;
+    font-size: 13px; font-weight: 700; font-family: inherit;
+    color: var(--accent); background: rgba(255, 255, 255, .92);
+    border: 1.5px solid var(--accent); border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(20, 30, 60, .18); cursor: pointer;
+  }
+  #installBtn:active { background: var(--accent); color: #fff; }
+  .overlay {
+    position: fixed; inset: 0; background: rgba(15, 20, 34, .55);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+    z-index: 1000;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--card); color: var(--text); width: 100%; max-width: 360px;
+    border-radius: 16px; padding: 22px 20px; text-align: left;
+    box-shadow: 0 12px 40px rgba(10, 16, 34, .35);
+  }
+  .modal h3 { margin: 0 0 8px; font-size: 17px; text-align: center; }
+  .modal ol { margin: 10px 0 0; padding-left: 20px; font-size: 13.5px; line-height: 1.7; }
+  .modal .close {
+    margin-top: 16px; width: 100%; padding: 12px; border: none; border-radius: 10px;
+    background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+  .appicon {
+    width: 56px; height: 56px; border-radius: 14px; display: block; margin: 0 auto 8px;
+    box-shadow: 0 3px 10px rgba(20, 30, 60, .25);
+  }
 </style>
 </head>
 <body>
@@ -65,7 +104,10 @@
   <p class="desc">아래 버튼으로 QR코드 이미지를 바로 저장하세요.</p>
 
   <div class="card">
-    <img class="qr" id="qrimg" alt="연락처 QR코드">
+    <div class="qrbox">
+      <img class="qr" id="qrimg" alt="연락처 QR코드">
+      <button type="button" id="installBtn" title="이 앱을 바탕화면에 설치">📱 설치</button>
+    </div>
     <div class="who" id="who"></div>
     <div class="tel" id="tel"></div>
 
@@ -86,6 +128,26 @@
   <p id="errmsg">공유 링크 정보가 손상되었거나 누락되었습니다.<br>
   QR코드를 새로 생성해 주세요.</p>
   <p style="margin-top:14px"><a href="https://mega808-del.github.io/QR-cord/" style="color:#3b6cf6">📇 QR코드 만들러 가기</a></p>
+</div>
+
+<div class="overlay" id="installOverlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <img class="appicon" src="icon-192.png" alt="연락처QR 앱 아이콘">
+    <h3>📱 연락처QR 앱으로 설치</h3>
+    <ol id="stepGeneric">
+      <li>브라우저 메뉴(⋮ 또는 ☰)를 여세요.</li>
+      <li><b>[앱 설치]</b> 또는 <b>[홈 화면에 추가]</b>를 선택하세요.</li>
+      <li>설치하면 바탕화면에 <b>"연락처QR"</b> 아이콘이 생깁니다.</li>
+    </ol>
+    <div id="stepIos" style="display:none">
+      <ol>
+        <li>하단의 <b>공유 버튼</b>(□에 ↑)을 누르세요.</li>
+        <li><b>[홈 화면에 추가]</b>를 선택하세요.</li>
+        <li>우측 상단 <b>[추가]</b>를 누르면 바탕화면에 설치됩니다.</li>
+      </ol>
+    </div>
+    <button type="button" class="close" id="installClose">닫기</button>
+  </div>
 </div>
 
 <script src="qrcode.min.js"></script>
@@ -219,6 +281,77 @@ document.getElementById('shareBtn').addEventListener('click', async function () 
     setStatus('이 브라우저는 공유를 지원하지 않습니다. 이미지 저장 버튼을 이용해 주세요.');
   }
 });
+
+// ---- 앱 설치(PWA): QR 우상단 [📱 설치] 버튼 ----
+var installBtn = document.getElementById('installBtn');
+var installOverlay = document.getElementById('installOverlay');
+var deferredPrompt = null;
+var waitingForPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (waitingForPrompt) { waitingForPrompt(); waitingForPrompt = null; }
+});
+window.addEventListener('appinstalled', function () {
+  deferredPrompt = null;
+  setStatus('✅ 설치 완료! 바탕화면에서 "연락처QR" 앱을 사용할 수 있어요.');
+});
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function waitForPrompt(ms) {
+  return new Promise(function (resolve) {
+    if (deferredPrompt) { resolve(true); return; }
+    var done = false;
+    waitingForPrompt = function () { if (!done) { done = true; resolve(true); } };
+    setTimeout(function () {
+      if (!done) { done = true; waitingForPrompt = null; resolve(false); }
+    }, ms);
+  });
+}
+
+function showInstallGuide() {
+  // iOS(사파리)는 네이티브 설치 프롬프트가 없어 공유 메뉴 경로 안내
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  document.getElementById('stepGeneric').style.display = isIOS ? 'none' : '';
+  document.getElementById('stepIos').style.display = isIOS ? '' : 'none';
+  installOverlay.classList.add('open');
+}
+
+installBtn.addEventListener('click', async function () {
+  if (isStandalone()) { setStatus('이미 앱(설치 모드)으로 실행 중입니다.'); return; }
+  setStatus('설치 팝업을 준비하는 중...');
+  var has = await waitForPrompt(2500);   // 설치 팝업 대기 (최대 2.5초)
+  if (has && deferredPrompt) {           // 1) 네이티브 설치 팝업 표시 → 확인 한 번으로 설치
+    try {
+      deferredPrompt.prompt();
+      var choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted') return;  // 완료는 appinstalled에서 안내
+      deferredPrompt = null;
+      setStatus('설치가 취소되었습니다. 버튼을 다시 누르면 설치할 수 있어요.');
+    } catch (_) { deferredPrompt = null; }
+    return;
+  }
+  showInstallGuide();                    // 2) 미지원 환경: 브라우저별 수동 설치 안내
+});
+
+document.getElementById('installClose').addEventListener('click', function () {
+  installOverlay.classList.remove('open');
+});
+installOverlay.addEventListener('click', function (e) {
+  if (e.target === installOverlay) installOverlay.classList.remove('open');
+});
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
 </script>
 </body>
 </html>
