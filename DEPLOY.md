@@ -3,10 +3,12 @@
 앱은 **서버 없이 브라우저에서만 동작**하며 GitHub Pages에서 24시간 무료로 운영됩니다.
 
 - **앱 주소**: https://mega808-del.github.io/QR-cord/
-- **공유 링크 형식**: `https://mega808-del.github.io/QR-cord/share.html?p=1.<vCard>.<이름>.<번호>`
+- **공유 링크 형식 (짧음)**: `https://mega808-del.github.io/QR-cord/share.html?p=1.<이름b64>.<번호>`
+  - 예: `...share.html?p=1.7ZmN6ri464-Z.01023456789` (홍길동 기준 약 77자)
+  - vCard는 링크에 담지 않고 받는 쪽에서 이름+번호로 재구성 (링크 61% 단축)
   - `?p=` 쿼리스트링 방식을 쓰는 이유: 카카오톡 모바일 등 일부 앱은 URL의 `#` 뒤 조각을 잘라내거나
     이스케이프해 해시 방식 링크를 유실할 수 있음 (쿼리스트링은 유지됨)
-  - share.html은 `#` 방식과 `?p=` 방식을 모두 지원
+  - share.html은 구형 긴 링크(4부분 payload, `#`/`?p=` 모두)도 하위 호환으로 지원
 
 ---
 

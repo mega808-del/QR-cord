@@ -132,9 +132,11 @@ function copyText(t) {
   });
 }
 
-// share.html#1.<vCard b64u>.<이름 b64u>.<번호 b64u>
-// 또는 share.html?p=1.<vCard b64u>.<이름 b64u>.<번호 b64u>
-// (?p= 형식은 카카오톡 모바일처럼 #조각을 잘라내는 앱에서도 유지됨)
+// 신규(짧은 링크): share.html?p=1.<이름 b64u>.<번호 원문>  → vCard는 아래에서 재구성
+// 구형(긴 링크, 하위 호환): 4부분 payload = 1.<vCard b64u>.<이름 b64u>.<번호 b64u>
+function buildVCard(n, p) {
+  return 'BEGIN:VCARD\nVERSION:3.0\nN:' + n + ';;;\nFN:' + n + '\nTEL;TYPE=CELL:' + p + '\nEND:VCARD';
+}
 function parsePayload() {
   var raw = null;
   if (location.hash.length >= 2) raw = location.hash.slice(1);
@@ -144,10 +146,15 @@ function parsePayload() {
   }
   if (!raw) return null;
   var parts = raw.split('.');
-  if (parts.length !== 4 || parts[0] !== '1') return null;
   try {
-    return { vcard: b64uDecode(parts[1]), name: b64uDecode(parts[2]), phone: b64uDecode(parts[3]) };
+    if (parts.length === 3 && parts[0] === '1') {          // 신규 짧은 형식
+      return { vcard: buildVCard(b64uDecode(parts[1]), parts[2]), name: b64uDecode(parts[1]), phone: parts[2] };
+    }
+    if (parts.length === 4 && parts[0] === '1') {          // 구형 긴 형식 (예전 링크 호환)
+      return { vcard: b64uDecode(parts[1]), name: b64uDecode(parts[2]), phone: b64uDecode(parts[3]) };
+    }
   } catch (_) { return null; }
+  return null;
 }
 
 function showInvalid(reason) {
