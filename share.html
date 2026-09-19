@@ -62,27 +62,6 @@
   .errbox { text-align: center; padding: 60px 20px; font-family: sans-serif; }
   .errbox h2 { margin: 0 0 10px; }
   .errbox p { color: #888; }
-  .overlay {
-    position: fixed; inset: 0; background: rgba(15, 20, 34, .55);
-    display: none; align-items: center; justify-content: center; padding: 20px;
-    z-index: 1000;
-  }
-  .overlay.open { display: flex; }
-  .modal {
-    background: var(--card); color: var(--text); width: 100%; max-width: 360px;
-    border-radius: 16px; padding: 22px 20px; text-align: left;
-    box-shadow: 0 12px 40px rgba(10, 16, 34, .35);
-  }
-  .modal h3 { margin: 0 0 8px; font-size: 17px; text-align: center; }
-  .modal ol { margin: 10px 0 0; padding-left: 20px; font-size: 13.5px; line-height: 1.7; }
-  .modal .close {
-    margin-top: 16px; width: 100%; padding: 12px; border: none; border-radius: 10px;
-    background: var(--accent); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
-  }
-  .appicon {
-    width: 56px; height: 56px; border-radius: 14px; display: block; margin: 0 auto 8px;
-    box-shadow: 0 3px 10px rgba(20, 30, 60, .25);
-  }
 </style>
 </head>
 <body>
@@ -99,7 +78,8 @@
     <div class="btnrow3">
       <a class="mbtn primary" id="dlBtn" download="vcard.png">⬇️ 이미지 저장</a>
       <button type="button" class="mbtn ghost" id="shareBtn">↗️ 공유</button>
-      <button type="button" class="mbtn ghost install" id="installBtn" title="이 앱을 바탕화면에 설치">📱 설치</button>
+      <!-- 설치 버튼: Chrome 설치 프롬프트(beforeinstallprompt)가 준비된 경우에만 표시됨 -->
+      <button type="button" class="mbtn ghost install" id="installBtn" title="앱으로 설치" style="display:none">📱 설치</button>
     </div>
 
     <div class="tip">💡 <b>저장이 안 되나요?</b> QR 이미지를 <b>길게 눌러</b> "이미지 저장" 또는 "사진에 추가"를 선택하세요.</div>
@@ -114,26 +94,6 @@
   <p id="errmsg">공유 링크 정보가 손상되었거나 누락되었습니다.<br>
   QR코드를 새로 생성해 주세요.</p>
   <p style="margin-top:14px"><a href="https://mega808-del.github.io/QR-cord/" style="color:#3b6cf6">📇 QR코드 만들러 가기</a></p>
-</div>
-
-<div class="overlay" id="installOverlay">
-  <div class="modal" role="dialog" aria-modal="true">
-    <img class="appicon" src="icon-192.png" alt="연락처QR 앱 아이콘">
-    <h3>📱 연락처QR 앱으로 설치</h3>
-    <ol id="stepGeneric">
-      <li>버튼을 다시 누르면 <b>설치 팝업</b>이 뜹니다. <b>[설치]</b>를 누르세요.</li>
-      <li>팝업이 안 뜨면 브라우저 메뉴(⋮)에서 <b>[앱 설치]</b>를 선택하세요.</li>
-      <li>설치하면 바탕화면에 <b>"연락처QR"</b> 앱 아이콘이 생깁니다. (앱으로 실행)</li>
-    </ol>
-    <div id="stepIos" style="display:none">
-      <ol>
-        <li>하단의 <b>공유 버튼</b>(□에 ↑)을 누르세요.</li>
-        <li><b>[홈 화면에 추가]</b>를 선택하세요.</li>
-        <li>우측 상단 <b>[추가]</b>를 누르면 바탕화면에 설치됩니다.</li>
-      </ol>
-    </div>
-    <button type="button" class="close" id="installClose">닫기</button>
-  </div>
 </div>
 
 <script src="qrcode.min.js"></script>
@@ -270,66 +230,38 @@ document.getElementById('shareBtn').addEventListener('click', async function () 
 
 // ---- 앱 설치(PWA): QR 우상단 [📱 설치] 버튼 ----
 var installBtn = document.getElementById('installBtn');
-var installOverlay = document.getElementById('installOverlay');
 var deferredPrompt = null;
-var waitingForPrompt = null;
 
+// Chrome 설치 기준 충족 시에만 버튼 표시 (미지원 브라우저에서는 버튼이 안 보임)
 window.addEventListener('beforeinstallprompt', function (e) {
   e.preventDefault();
   deferredPrompt = e;
-  if (waitingForPrompt) { waitingForPrompt(); waitingForPrompt = null; }
+  if (isStandalone()) return;   // 이미 앱으로 실행 중이면 버튼 숨김
+  installBtn.style.display = '';
 });
 window.addEventListener('appinstalled', function () {
   deferredPrompt = null;
-  setStatus('✅ 설치 완료! 바탕화면에서 "연락처QR" 앱을 사용할 수 있어요.');
+  installBtn.style.display = 'none';   // 설치 완료 후 버튼 제거
+  setStatus('✅ 홈 화면에 "연락처QR" 앱이 설치되었습니다.');
 });
 
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
-function waitForPrompt(ms) {
-  return new Promise(function (resolve) {
-    if (deferredPrompt) { resolve(true); return; }
-    var done = false;
-    waitingForPrompt = function () { if (!done) { done = true; resolve(true); } };
-    setTimeout(function () {
-      if (!done) { done = true; waitingForPrompt = null; resolve(false); }
-    }, ms);
-  });
-}
-
-function showInstallGuide() {
-  // iOS(사파리)는 네이티브 설치 프롬프트가 없어 공유 메뉴 경로 안내
-  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
-              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  document.getElementById('stepGeneric').style.display = isIOS ? 'none' : '';
-  document.getElementById('stepIos').style.display = isIOS ? '' : 'none';
-  installOverlay.classList.add('open');
-}
-
+// 클릭 시 Chrome의 실제 설치 확인창만 띄움 (자체 팝업 없음)
 installBtn.addEventListener('click', async function () {
-  if (isStandalone()) { setStatus('이미 앱(설치 모드)으로 실행 중입니다.'); return; }
-  setStatus('설치 팝업을 준비하는 중...');
-  var has = await waitForPrompt(2500);   // 설치 팝업 대기 (최대 2.5초)
-  if (has && deferredPrompt) {           // 1) 네이티브 설치 팝업 표시 → 확인 한 번으로 설치
-    try {
-      deferredPrompt.prompt();
-      var choice = await deferredPrompt.userChoice;
-      if (choice && choice.outcome === 'accepted') return;  // 완료는 appinstalled에서 안내
-      deferredPrompt = null;
-      setStatus('설치가 취소되었습니다. 버튼을 다시 누르면 설치할 수 있어요.');
-    } catch (_) { deferredPrompt = null; }
-    return;
-  }
-  showInstallGuide();                    // 2) 미지원 환경: 브라우저별 수동 설치 안내
-});
-
-document.getElementById('installClose').addEventListener('click', function () {
-  installOverlay.classList.remove('open');
-});
-installOverlay.addEventListener('click', function (e) {
-  if (e.target === installOverlay) installOverlay.classList.remove('open');
+  if (!deferredPrompt) return;
+  try {
+    deferredPrompt.prompt();
+    var choice = await deferredPrompt.userChoice;
+    if (choice && choice.outcome === 'accepted') {   // 완료 안내는 appinstalled에서
+      installBtn.style.display = 'none';
+      return;
+    }
+    deferredPrompt = null;
+    setStatus('설치를 취소했습니다. 다시 설치하려면 새로고침해 주세요.');
+  } catch (_) { deferredPrompt = null; }
 });
 </script>
 <script>

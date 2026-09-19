@@ -68,6 +68,14 @@
   }
   .error { color: #e5484d !important; font-weight: 600; }
   .ok { color: #2fa96e !important; font-weight: 600; }
+  /* 설치 버튼: Chrome 설치 프롬프트가 준비된 경우에만 표시 (자체 팝업 없음) */
+  #installBtn {
+    display: none; width: auto; margin: 12px auto 0; padding: 8px 16px;
+    font-size: 13.5px; font-weight: 700; color: var(--accent);
+    background: transparent; border: 1.5px solid var(--accent);
+    border-radius: 999px; cursor: pointer;
+  }
+  #installBtn:active { background: var(--accent); color: #fff; }
 </style>
 </head>
 <body>
@@ -99,6 +107,7 @@
     </div>
 
     <div id="status"></div>
+    <button type="button" id="installBtn">📱 연락처QR 앱 설치</button>
   </div>
 </div>
 
@@ -213,6 +222,36 @@ downloadBtn.addEventListener('click', function () {
   a.click();
   a.remove();
   setStatus('이미지를 다운로드했습니다.', 'ok');
+});
+
+// ---- 앱 설치(PWA): Chrome 설치 프롬프트가 준비된 경우에만 버튼 표시 ----
+var installBtn = document.getElementById('installBtn');
+var deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) return;
+  installBtn.style.display = 'block';
+});
+window.addEventListener('appinstalled', function () {
+  deferredPrompt = null;
+  installBtn.style.display = 'none';
+  setStatus('✅ 홈 화면에 "연락처QR" 앱이 설치되었습니다.', 'ok');
+});
+
+installBtn.addEventListener('click', async function () {
+  if (!deferredPrompt) return;
+  try {
+    deferredPrompt.prompt();
+    var choice = await deferredPrompt.userChoice;
+    if (choice && choice.outcome === 'accepted') {   // 완료 안내는 appinstalled에서
+      installBtn.style.display = 'none';
+      return;
+    }
+    deferredPrompt = null;
+    setStatus('설치를 취소했습니다. 다시 설치하려면 새로고침해 주세요.', '');
+  } catch (_) { deferredPrompt = null; }
 });
 
 shareBtn.addEventListener('click', async function () {
