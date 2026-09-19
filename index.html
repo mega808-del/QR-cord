@@ -206,6 +206,11 @@ form.addEventListener('submit', async function (e) {
     tel.textContent = p.value;
     result.style.display = 'block';
     setStatus('생성 완료! 이미지를 저장하거나 링크를 복사해 공유하세요.', 'ok');
+
+    // 마지막으로 만든 QR 기록 — 설치한 앱(연락처QR)을 다시 열면 이 QR이 자동 표시됨
+    try {
+      localStorage.setItem('contactqr.lastQR', JSON.stringify({ name: name, phone: p.value, ts: Date.now() }));
+    } catch (_) {}
   } catch (err) {
     setStatus(err && err.message ? err.message : '오류가 발생했습니다.', 'error');
   } finally {
@@ -270,6 +275,20 @@ shareBtn.addEventListener('click', async function () {
     setStatus('공유 링크: ' + link, '');
   }
 });
+
+// ---- 앱(바탕화면 아이콘)으로 다시 열 때: 마지막 QR 자동 표시 ----
+(function restoreLastQR() {
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!standalone) return;              // 브라우저로 열었을 때는 항상 입력폼부터
+  try {
+    var d = JSON.parse(localStorage.getItem('contactqr.lastQR') || 'null');
+    if (!d || !d.name || !d.phone) return;
+    document.getElementById('name').value = d.name;
+    document.getElementById('phone').value = d.phone;
+    var ev = { preventDefault: function () {} };
+    form.dispatchEvent(new Event('submit', { cancelable: true }));
+  } catch (_) { /* 조용히 입력폼 유지 */ }
+})();
 </script>
 <script>
 // PWA 설치(웹앱 패키지) 활성화용 — 화면에는 아무 변화 없음

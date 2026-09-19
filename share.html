@@ -203,6 +203,11 @@ async function init() {
   dl.href = dataUrl;
   dl.download = dlName;
   document.getElementById('app').style.display = 'block';
+
+  // 이 기기에 마지막으로 본 QR 기록 — 설치한 앱(연락처QR)을 열면 이 QR부터 표시됨
+  try {
+    localStorage.setItem('contactqr.lastQR', JSON.stringify({ name: name, phone: phone, ts: Date.now() }));
+  } catch (_) {}
 }
 
 init().catch(showInvalid);
