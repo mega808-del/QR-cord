@@ -78,8 +78,8 @@
     <div class="btnrow3">
       <a class="mbtn primary" id="dlBtn" download="vcard.png">⬇️ 이미지 저장</a>
       <button type="button" class="mbtn ghost" id="shareBtn">↗️ 공유</button>
-      <!-- 설치 버튼: Chrome 설치 프롬프트(beforeinstallprompt)가 준비된 경우에만 표시됨 -->
-      <button type="button" class="mbtn ghost install" id="installBtn" title="앱으로 설치" style="display:none">📱 설치</button>
+      <!-- 설치 버튼: 항상 표시. 클릭 시 Chrome 설치창이 뜨고, 미지원 브라우저(카톡 인앱 등)는 짧은 안내만 표시 -->
+      <button type="button" class="mbtn ghost install" id="installBtn" title="앱으로 설치">📱 설치</button>
     </div>
 
     <div class="tip">💡 <b>저장이 안 되나요?</b> QR 이미지를 <b>길게 눌러</b> "이미지 저장" 또는 "사진에 추가"를 선택하세요.</div>
@@ -232,12 +232,11 @@ document.getElementById('shareBtn').addEventListener('click', async function () 
 var installBtn = document.getElementById('installBtn');
 var deferredPrompt = null;
 
-// Chrome 설치 기준 충족 시에만 버튼 표시 (미지원 브라우저에서는 버튼이 안 보임)
+// Chrome이 설치를 지원하면 설치창을 쓸 수 있게 준비
 window.addEventListener('beforeinstallprompt', function (e) {
   e.preventDefault();
   deferredPrompt = e;
-  if (isStandalone()) return;   // 이미 앱으로 실행 중이면 버튼 숨김
-  installBtn.style.display = '';
+  if (isStandalone()) installBtn.style.display = 'none';   // 이미 앱으로 실행 중이면 숨김
 });
 window.addEventListener('appinstalled', function () {
   deferredPrompt = null;
@@ -249,9 +248,14 @@ function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
-// 클릭 시 Chrome의 실제 설치 확인창만 띄움 (자체 팝업 없음)
+// 클릭 시 Chrome의 실제 설치 확인창을 띄움 (자체 팝업 없음).
+// 카톡 인앱 브라우저 등 미지원 환경에서는 큰 팝업 대신 짧은 안내 문구만 표시.
 installBtn.addEventListener('click', async function () {
-  if (!deferredPrompt) return;
+  if (isStandalone()) return;
+  if (!deferredPrompt) {
+    setStatus('이 브라우저에서는 바로 설치할 수 없어요. Chrome(크롬) 앱으로 주소를 열고 [⋮] 메뉴 > [앱 설치]를 눌러 주세요.');
+    return;
+  }
   try {
     deferredPrompt.prompt();
     var choice = await deferredPrompt.userChoice;

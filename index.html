@@ -70,7 +70,7 @@
   .ok { color: #2fa96e !important; font-weight: 600; }
   /* 설치 버튼: Chrome 설치 프롬프트가 준비된 경우에만 표시 (자체 팝업 없음) */
   #installBtn {
-    display: none; width: auto; margin: 12px auto 0; padding: 8px 16px;
+    display: block; width: auto; margin: 12px auto 0; padding: 8px 16px;
     font-size: 13.5px; font-weight: 700; color: var(--accent);
     background: transparent; border: 1.5px solid var(--accent);
     border-radius: 999px; cursor: pointer;
@@ -231,8 +231,9 @@ var deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', function (e) {
   e.preventDefault();
   deferredPrompt = e;
-  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) return;
-  installBtn.style.display = 'block';
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    installBtn.style.display = 'none';   // 이미 앱으로 실행 중
+  }
 });
 window.addEventListener('appinstalled', function () {
   deferredPrompt = null;
@@ -241,7 +242,11 @@ window.addEventListener('appinstalled', function () {
 });
 
 installBtn.addEventListener('click', async function () {
-  if (!deferredPrompt) return;
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) return;
+  if (!deferredPrompt) {
+    setStatus('이 브라우저에서는 바로 설치할 수 없어요. Chrome(크롬) 앱으로 주소를 열고 [⋮] 메뉴 > [앱 설치]를 눌러 주세요.', '');
+    return;
+  }
   try {
     deferredPrompt.prompt();
     var choice = await deferredPrompt.userChoice;
