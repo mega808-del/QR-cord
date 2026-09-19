@@ -278,16 +278,26 @@ shareBtn.addEventListener('click', async function () {
 
 // ---- 앱(바탕화면 아이콘)으로 다시 열 때: 마지막 QR 자동 표시 ----
 (function restoreLastQR() {
-  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (!standalone) return;              // 브라우저로 열었을 때는 항상 입력폼부터
+  var standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+  if (!standalone) return;              // 브라우저로 열었을 때는 기존 화면 그대로
+  // 설치된 앱 화면: QR 생성 요소(제목·설명·입력폼·설치버튼)는 숨기고 결과만 표시
+  document.querySelector('h1').style.display = 'none';
+  document.querySelector('.desc').style.display = 'none';
+  form.style.display = 'none';
+  installBtn.style.display = 'none';
   try {
     var d = JSON.parse(localStorage.getItem('contactqr.lastQR') || 'null');
-    if (!d || !d.name || !d.phone) return;
-    document.getElementById('name').value = d.name;
-    document.getElementById('phone').value = d.phone;
-    var ev = { preventDefault: function () {} };
-    form.dispatchEvent(new Event('submit', { cancelable: true }));
-  } catch (_) { /* 조용히 입력폼 유지 */ }
+    if (d && d.name && d.phone) {
+      document.getElementById('name').value = d.name;
+      document.getElementById('phone').value = d.phone;
+      form.dispatchEvent(new Event('submit', { cancelable: true }));
+    } else {
+      setStatus('QR이 아직 없습니다. 브라우저에서 QR을 만들거나 공유 링크를 열면 여기에 표시됩니다.', '');
+    }
+  } catch (_) {
+    setStatus('저장된 QR을 불러오지 못했습니다.', 'error');
+  }
 })();
 </script>
 <script>
