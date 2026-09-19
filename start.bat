@@ -6,7 +6,7 @@ rem ============================================================
 rem  Opens the app directly from the docs folder.
 rem  No server needed - it runs entirely in your browser.
 rem
-rem  Online 24/7 version (after enabling GitHub Pages):
+rem  Online 24/7 version:
 rem  https://mega808-del.github.io/QR-cord/
 rem ============================================================
 
@@ -17,7 +17,7 @@ echo   Opening in your browser...
 echo  ==========================================
 echo.
 
-start "" "%~dp0docs\index.html"
+start "" "%~dp0index.html"
 
 echo  The app opened in your browser (works offline).
 echo  You can close this window.

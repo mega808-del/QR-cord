@@ -82,9 +82,10 @@
 </div>
 
 <div id="errbox" class="errbox" style="display:none">
-  <h2>🔗 만료되었거나 잘못된 링크입니다</h2>
-  <p>공유 링크 정보가 손상되었거나 누락되었습니다.<br>
+  <h2>🔗 잘못된 링크입니다</h2>
+  <p id="errmsg">공유 링크 정보가 손상되었거나 누락되었습니다.<br>
   QR코드를 새로 생성해 주세요.</p>
+  <p style="margin-top:14px"><a href="https://mega808-del.github.io/QR-cord/" style="color:#3b6cf6">📇 QR코드 만들러 가기</a></p>
 </div>
 
 <script src="qrcode.min.js"></script>
@@ -132,24 +133,42 @@ function copyText(t) {
 }
 
 // share.html#1.<vCard b64u>.<이름 b64u>.<번호 b64u>
-function parseHash() {
-  if (location.hash.length < 2) return null;
-  var parts = location.hash.slice(1).split('.');
+// 또는 share.html?p=1.<vCard b64u>.<이름 b64u>.<번호 b64u>
+// (?p= 형식은 카카오톡 모바일처럼 #조각을 잘라내는 앱에서도 유지됨)
+function parsePayload() {
+  var raw = null;
+  if (location.hash.length >= 2) raw = location.hash.slice(1);
+  else if (location.search.length > 1) {
+    var m = location.search.match(/[?&]p=([^&]*)/);
+    if (m) raw = m[1];
+  }
+  if (!raw) return null;
+  var parts = raw.split('.');
   if (parts.length !== 4 || parts[0] !== '1') return null;
   try {
     return { vcard: b64uDecode(parts[1]), name: b64uDecode(parts[2]), phone: b64uDecode(parts[3]) };
   } catch (_) { return null; }
 }
 
-function showInvalid() {
+function showInvalid(reason) {
   document.getElementById('app').style.display = 'none';
+  var msg = document.getElementById('errmsg');
+  if (reason === 'truncated') {
+    msg.innerHTML = '메신저 앱이 링크 뒷부분을 잘라냈습니다.<br>' +
+      '링크를 <b>길게 눌러 "복사"</b>한 뒤 <b>브라우저 주소창에 붙여넣어</b> 열어 주세요.';
+  }
   document.getElementById('errbox').style.display = 'block';
   document.title = '링크 오류';
 }
 
 async function init() {
-  var d = parseHash();
-  if (!d || !d.name || !d.phone || d.vcard.indexOf('BEGIN:VCARD') !== 0) { showInvalid(); return; }
+  var d = parsePayload();
+  if (!d) {
+    // 페이로드가 아예 없으면: 일부 앱이 #을 잘라낸 경우 — ?p=만 확인했으므로 안내
+    showInvalid('truncated');
+    return;
+  }
+  if (!d.name || !d.phone || d.vcard.indexOf('BEGIN:VCARD') !== 0) { showInvalid(); return; }
   name = d.name; phone = d.phone; vcard = d.vcard;
   dlName = safeFile(name);
 

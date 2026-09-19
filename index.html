@@ -113,9 +113,10 @@ var shareBtn = document.getElementById('shareBtn');
 var currentDataUrl = null;
 var currentName = '';
 
-// 공유 링크는 반드시 "온라인 배포 주소"여야 상대방이 열 수 있음
-// (저장소 이름/경로를 바꾸면 이 한 줄만 수정)
-var SHARE_BASE = 'https://mega808-del.github.io/QR-cord/share.html#';
+// 공유 링크는 반드시 "온라인 배포 주소"여야 상대방이 열 수 있음.
+// ?p= 쿼리 파라미터를 쓰는 이유: 카카오톡 등 일부 앱이 URL 뒤에 붙는 #조각을
+// 잘라내거나 이스케이프해 #만으로는 데이터가 유실될 수 있음 (?p=은 유지됨).
+var SHARE_BASE = 'https://mega808-del.github.io/QR-cord/share.html?p=';
 
 function setStatus(msg, cls) {
   statusEl.textContent = msg || '';
@@ -211,10 +212,10 @@ downloadBtn.addEventListener('click', function () {
 
 shareBtn.addEventListener('click', async function () {
   if (!currentDataUrl) return;
-  var vcard = buildVCard(currentName, document.getElementById('phone').value.replace(/[-\s.]/g, ''));
+  var phoneNorm = document.getElementById('phone').value.replace(/[-\s.]/g, '');
+  var vcard = buildVCard(currentName, phoneNorm);
   var link = SHARE_BASE + '1.' + b64uEncode(vcard) + '.' +
-             b64uEncode(currentName) + '.' +
-             b64uEncode(document.getElementById('phone').value.replace(/[-\s.]/g, ''));
+             b64uEncode(currentName) + '.' + b64uEncode(phoneNorm);
   try {
     await copyText(link);
     setStatus('공유 링크를 복사했습니다! 메신저로 보내면 상대방이 바로 저장할 수 있어요.', 'ok');
