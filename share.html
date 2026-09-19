@@ -135,9 +135,9 @@
     <img class="appicon" src="icon-192.png" alt="연락처QR 앱 아이콘">
     <h3>📱 연락처QR 앱으로 설치</h3>
     <ol id="stepGeneric">
-      <li>브라우저 메뉴(⋮ 또는 ☰)를 여세요.</li>
-      <li><b>[앱 설치]</b> 또는 <b>[홈 화면에 추가]</b>를 선택하세요.</li>
-      <li>설치하면 바탕화면에 <b>"연락처QR"</b> 아이콘이 생깁니다.</li>
+      <li>버튼을 다시 누르면 <b>설치 팝업</b>이 뜹니다. <b>[설치]</b>를 누르세요.</li>
+      <li>팝업이 안 뜨면 브라우저 메뉴(⋮)에서 <b>[앱 설치]</b>를 선택하세요.</li>
+      <li>설치하면 바탕화면에 <b>"연락처QR"</b> 앱 아이콘이 생깁니다. (앱으로 실행)</li>
     </ol>
     <div id="stepIos" style="display:none">
       <ol>
@@ -347,9 +347,10 @@ installOverlay.addEventListener('click', function (e) {
 });
 </script>
 <script>
+// PWA 설치(웹앱 패키지) 활성화용 — 화면에는 아무 변화 없음
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {});
   });
 }
 </script>

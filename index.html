@@ -228,9 +228,10 @@ shareBtn.addEventListener('click', async function () {
 });
 </script>
 <script>
+// PWA 설치(웹앱 패키지) 활성화용 — 화면에는 아무 변화 없음
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {});
   });
 }
 </script>
