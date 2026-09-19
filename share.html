@@ -40,16 +40,18 @@
     margin: 0 auto;
   }
   .who { font-size: 18px; font-weight: 700; margin: 14px 0 2px; }
-  .tel { color: var(--sub); font-size: 15px; margin: 0 0 18px; }
-  .btns { display: flex; flex-direction: column; gap: 10px; }
-  .btn {
-    display: block; width: 100%; padding: 15px; font-size: 16.5px; font-weight: 700;
-    border-radius: 12px; cursor: pointer; text-align: center;
-    text-decoration: none; border: none;
+  .tel { color: var(--sub); font-size: 15px; margin: 0 0 14px; }
+  /* 번호 바로 아래 3버튼 가로 배치 (저장/공유/설치) — 동일 간격·작은 크기 */
+  .btnrow3 { display: flex; gap: 8px; }
+  .mbtn {
+    flex: 1; display: block; padding: 11px 2px; font-size: 13.5px; font-weight: 700;
+    border-radius: 10px; cursor: pointer; text-align: center;
+    text-decoration: none; border: none; white-space: nowrap; font-family: inherit;
   }
-  .btn.primary { color: #fff; background: var(--accent); }
-  .btn.primary:active { background: var(--accent-press); }
-  .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .mbtn.primary { color: #fff; background: var(--accent); }
+  .mbtn.primary:active { background: var(--accent-press); }
+  .mbtn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .mbtn.install { border-style: dashed; }
   .tip {
     margin-top: 18px; padding: 12px 14px; font-size: 13.5px; line-height: 1.55;
     color: var(--sub); background: var(--bg); border-radius: 10px;
@@ -60,20 +62,6 @@
   .errbox { text-align: center; padding: 60px 20px; font-family: sans-serif; }
   .errbox h2 { margin: 0 0 10px; }
   .errbox p { color: #888; }
-  /* QR 우상단 설치 버튼 (신규 추가 — 기존 요소는 변경 없음)
-     주의: 버튼이 QR 모듈(특히 우상단 파인더 패턴)을 덮으면 스캔이 깨지므로
-     QR 이미지와 겹치지 않게 위쪽 띠에 배치함 */
-  .qrbox { position: relative; display: inline-block; padding-top: 36px; }
-  .qrbox .qr { margin-bottom: 0; }
-  #installBtn {
-    position: absolute; top: 0; right: 0; z-index: 5;
-    width: auto; margin: 0; padding: 7px 13px;
-    font-size: 13px; font-weight: 700; font-family: inherit;
-    color: var(--accent); background: rgba(255, 255, 255, .92);
-    border: 1.5px solid var(--accent); border-radius: 999px;
-    box-shadow: 0 2px 8px rgba(20, 30, 60, .18); cursor: pointer;
-  }
-  #installBtn:active { background: var(--accent); color: #fff; }
   .overlay {
     position: fixed; inset: 0; background: rgba(15, 20, 34, .55);
     display: none; align-items: center; justify-content: center; padding: 20px;
@@ -104,16 +92,14 @@
   <p class="desc">아래 버튼으로 QR코드 이미지를 바로 저장하세요.</p>
 
   <div class="card">
-    <div class="qrbox">
-      <img class="qr" id="qrimg" alt="연락처 QR코드">
-      <button type="button" id="installBtn" title="이 앱을 바탕화면에 설치">📱 설치</button>
-    </div>
+    <img class="qr" id="qrimg" alt="연락처 QR코드">
     <div class="who" id="who"></div>
     <div class="tel" id="tel"></div>
 
-    <div class="btns">
-      <a class="btn primary" id="dlBtn" download="vcard.png">⬇️ 이미지 저장</a>
-      <button type="button" class="btn ghost" id="shareBtn">↗️ 공유하기</button>
+    <div class="btnrow3">
+      <a class="mbtn primary" id="dlBtn" download="vcard.png">⬇️ 이미지 저장</a>
+      <button type="button" class="mbtn ghost" id="shareBtn">↗️ 공유</button>
+      <button type="button" class="mbtn ghost install" id="installBtn" title="이 앱을 바탕화면에 설치">📱 설치</button>
     </div>
 
     <div class="tip">💡 <b>저장이 안 되나요?</b> QR 이미지를 <b>길게 눌러</b> "이미지 저장" 또는 "사진에 추가"를 선택하세요.</div>
